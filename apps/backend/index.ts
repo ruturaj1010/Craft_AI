@@ -1,17 +1,54 @@
 import express from 'express';
+import {prisma} from './db';
+import {signupSchema, signinSchema, CreateAvatarSchema} from './types';
 
 const app = express();
 
-app.post('/api/v1/signup', (req, res) => {
-    res.json({});
+app.post('/api/v1/signup', async (req, res) => {
+    const { success, data } = signupSchema.safeParse(req.body);
+
+    if (!success) {
+        return res.status(400).json({ error: 'Invalid Credentials' });
+    }
+
+    const user = await prisma.user.create({
+        data: {
+            username : data.username,
+            password : data.password
+        }
+    })
+    res.json({id: user.id});
 });
 
-app.post('/api/v1/signin', (req, res) => {
-    res.json({});
+app.post('/api/v1/signin', async (req, res) => {
+    const { success, data} = signinSchema.safeParse(req.body);
+
+    if(!success) {
+        return res.status(400).json({error: 'Invalid Credentials'});
+    }
+
+    const user = await prisma.user.findUnique({
+        where: {
+            username: data.username
+        }
+    });
+
+    if (!user) {
+        return res.status(400).json({error: 'Invalid Credentials'});
+    }
+
+    // const isMatch = await bcrypt.compare(data.password, user.password);
+    res.json({id: user.id});
 });
 
 app.post('/api/v1/avatar', (req, res) => {
-    res.json({});
+    const {success, data} = CreateAvatarSchema.safeParse(req.body);
+
+    if (!success) {
+        return res.status(400).json({error: 'Invalid Avatar data'});
+    }
+
+    
 });
 
 app.post('/api/v1/video', (req, res) => {
